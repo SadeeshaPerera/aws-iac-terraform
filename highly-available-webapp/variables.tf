@@ -19,7 +19,7 @@ variable "private_subnets" {
 variable "azs" {
   description = "List of availability zones"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["ap-southeast-1a", "ap-southeast-1b"]
 }
 
 variable "ami_id" {
