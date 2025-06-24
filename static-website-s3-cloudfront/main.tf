@@ -5,10 +5,16 @@ provider "aws" {
 resource "aws_s3_bucket" "website_bucket" {
   bucket = "my-static-website-bucket-${random_id.suffix.hex}"
   force_destroy = true
+}
 
-  website {
-    index_document = "index.html"
-    error_document = "error.html"
+resource "aws_s3_bucket_website_configuration" "website" {
+  bucket = aws_s3_bucket.website_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+  error_document {
+    key = "error.html"
   }
 }
 
@@ -42,14 +48,14 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-resource "aws_s3_bucket_object" "index" {
+resource "aws_s3_object" "index" {
   bucket = aws_s3_bucket.website_bucket.id
   key    = "index.html"
   source = "${path.module}/website/index.html"
   content_type = "text/html"
 }
 
-resource "aws_s3_bucket_object" "error" {
+resource "aws_s3_object" "error" {
   bucket = aws_s3_bucket.website_bucket.id
   key    = "error.html"
   source = "${path.module}/website/error.html"
@@ -75,21 +81,13 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = aws_s3_bucket.website_bucket.id
-
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = aws_s3_bucket.website_bucket.id
     viewer_protocol_policy = "redirect-to-https"
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # AllViewerExceptHostHeader
   }
-
-  price_class = "PriceClass_200"
 
   restrictions {
     geo_restriction {
