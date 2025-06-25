@@ -24,7 +24,7 @@ resource "aws_launch_template" "webapp" {
   image_id      = var.ami_id
   instance_type = var.instance_type
   user_data     = filebase64("${path.module}/user_data.sh")
-  security_group_names = [aws_security_group.ec2_sg.name]
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 }
 
 resource "aws_autoscaling_group" "webapp" {
@@ -47,26 +47,14 @@ resource "aws_autoscaling_group" "webapp" {
   }
 }
 
-resource "aws_autoscaling_policy" "scale_out" {
-  name                   = "scale-out"
+resource "aws_autoscaling_policy" "cpu_target" {
+  name                   = "cpu-target"
   autoscaling_group_name = aws_autoscaling_group.webapp.name
   policy_type            = "TargetTrackingScaling"
   target_tracking_configuration {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
-    target_value = 70.0
-  }
-}
-
-resource "aws_autoscaling_policy" "scale_in" {
-  name                   = "scale-in"
-  autoscaling_group_name = aws_autoscaling_group.webapp.name
-  policy_type            = "TargetTrackingScaling"
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 30.0
+    target_value = 50.0
   }
 }
